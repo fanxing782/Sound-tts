@@ -1,0 +1,17 @@
+[package]
+name = "Sound-tts"
+version = "0.1.0"
+edition = "2021"
+authors = ["fanxing782 <fanxingitn@outlook.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/fanxing782/sound-tts.git"
+
+[lib]
+crate-type = ["lib", "cdylib", "staticlib"]
+[dependencies]
+lazy_static = "1.5.0"
+
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58",features = ["Foundation", "Foundation_Collections", "Media_Core", "Media_Playback", "Media_SpeechSynthesis", "Storage_Streams", "Devices_Enumeration","Media_Audio"] }
+windows-result = "0.2.0"
