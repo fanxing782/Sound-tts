@@ -56,16 +56,18 @@ pub mod windows {
         }
 
         fn speak(&self, context: String) -> Result<(), Error> {
-            let str = HSTRING::from(context);
+            let str = HSTRING::from(&context);
             let synthesizer = SpeechSynthesizer::new()?;
             let stream = synthesizer.SynthesizeTextToStreamAsync(&str)?.get()?;
             let media_source = MediaSource::CreateFromStream(&stream, &stream.ContentType()?)?;
+            stream.Close()?;
             self.player.SetSource(&media_source)?;
             let session = self.player.PlaybackSession()?;
             self.player.Play()?;
             loop {
                 if let Ok(state) = &session.PlaybackState() {
                     if state == &MediaPlaybackState::Paused {
+                        media_source.Close()?;
                         break;
                     }
                 }
