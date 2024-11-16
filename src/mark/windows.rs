@@ -76,6 +76,13 @@ pub mod windows {
     }
 
 
+    impl Drop for WindowsTTs {
+        fn drop(&mut self) {
+            self.player.Close().expect("Player close failed");
+        }
+    }
+
+
     impl From<windows_result::Error> for Error {
         fn from(value: windows_result::Error) -> Self {
             Error::Windows(value)

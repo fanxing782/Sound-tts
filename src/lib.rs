@@ -3,7 +3,7 @@ use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::Duration;
 
-#[cfg(target_family = "linux")]
+#[cfg(target_family = "unix")]
 use crate::mark::linux::linux::LinuxTTs;
 
 #[cfg(target_family = "windows")]
@@ -53,7 +53,7 @@ impl SoundTTs {
     fn init() {
         #[cfg(target_family = "windows")]
         let devices = WindowsTTs::devices();
-        #[cfg(target_family = "linux")]
+        #[cfg(target_family = "unix")]
         let devices = LinuxTTs::devices();
 
         if let Ok(mut speakers) = SPEAKERS.clone().write() {
@@ -103,7 +103,7 @@ struct Speaker {
     name: String,
     #[cfg(target_family = "windows")]
     tts: Arc<RwLock<WindowsTTs>>,
-    #[cfg(target_family = "linux")]
+    #[cfg(target_family = "unix")]
     tts: Arc<RwLock<LinuxTTs>>,
 }
 
@@ -113,7 +113,7 @@ impl Speaker {
         Speaker {
             #[cfg(target_family = "windows")]
             tts: Arc::new(RwLock::new(WindowsTTs::new(name.as_str()).unwrap())),
-            #[cfg(target_family = "linux")]
+            #[cfg(target_family = "unix")]
             tts: Arc::new(RwLock::new(LinuxTTs::new(name.as_str()).unwrap())),
             name,
         }

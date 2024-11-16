@@ -1,4 +1,4 @@
-#[cfg(target_family = "linux")]
+#[cfg(target_family = "unix")]
 pub mod linux {
     use crate::{Error, Target};
     use lazy_static::lazy_static;
