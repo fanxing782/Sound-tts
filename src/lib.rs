@@ -8,14 +8,7 @@ use crate::mark::linux::linux::LinuxTTs;
 
 #[cfg(target_family = "windows")]
 use crate::mark::windows::windows::WindowsTTs;
-
-
 mod mark;
-
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -47,10 +40,10 @@ lazy_static! {
 
 
 
-struct SoundTTs;
+pub struct SoundTTs;
 
 impl SoundTTs {
-    fn init() {
+    pub fn init() {
         #[cfg(target_family = "windows")]
         let devices = WindowsTTs::devices();
         #[cfg(target_family = "unix")]
@@ -63,7 +56,7 @@ impl SoundTTs {
         }
     }
 
-    fn get_devices() -> Vec<String> {
+    pub fn get_devices() -> Vec<String> {
         if let Ok(speakers) = SPEAKERS.clone().read() {
             let names: Vec<String> = speakers.iter()
                 .map(|speaker| speaker.name.clone())
@@ -74,7 +67,7 @@ impl SoundTTs {
         vec![]
     }
 
-    fn speak(text: String, device: String) {
+    pub fn speak(text: String, device: String) {
         let guard = SPEAKERS.read().unwrap();
         let speaker_option = guard.iter()
             .find(|speaker| speaker.name == device).clone();
