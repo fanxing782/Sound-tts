@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["fanxing782 <fanxingitn@outlook.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/fanxing782/sound-tts.git"
-
+description = "Implementing Text to Speech Conversion Using System APIs"
 [lib]
 crate-type = ["lib", "cdylib", "staticlib"]
 [dependencies]
