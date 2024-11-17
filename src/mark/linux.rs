@@ -10,12 +10,14 @@ pub mod linux {
     #[derive(Debug)]
     pub(crate) struct LinuxTTs {
         player: u8,
+        device_name: String,
     }
 
     impl Target for LinuxTTs {
         fn new(device: &str) -> Result<LinuxTTs, Error> {
             Ok(LinuxTTs {
                 player: 0,
+                device_name: String::from(device),
             })
         }
 
@@ -23,7 +25,16 @@ pub mod linux {
             vec!["Linux system is temporarily not supported".to_string()]
         }
 
-        fn speak(&self, context: String) -> Result<(), Error> {
+        fn speak(&self, _context: String, _interrupt: bool) -> Result<(), Error> {
+            Ok(())
+        }
+
+
+        fn is_playing(&self) -> Result<bool, Error> {
+            Ok(true)
+        }
+
+        fn stop(&self) -> Result<(), Error> {
             Ok(())
         }
     }

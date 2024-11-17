@@ -5,12 +5,11 @@ edition = "2021"
 authors = ["fanxing782 <fanxingitn@outlook.com>"]
 license = "Apache-2.0"
 repository = "https://github.com/fanxing782/sound-tts.git"
-description = "Implementing Text to Speech Conversion Using System APIs"
+description = "利用系统 API 达成文本到语音的转换，并借助对不同声卡设备的选择来实现播放功能。\r\nAchieve text-to-speech conversion by utilizing system APIs, and realize the playback function by means of selecting different sound card devices."
 [lib]
 crate-type = ["lib", "cdylib", "staticlib"]
 [dependencies]
 lazy_static = "1.5.0"
-
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58",features = ["Foundation", "Foundation_Collections", "Media_Core", "Media_Playback", "Media_SpeechSynthesis", "Storage_Streams", "Devices_Enumeration","Media_Audio"] }
