@@ -46,14 +46,12 @@ pub mod windows {
                     if let Ok(state) = &session.PlaybackState() {
                         if state == &MediaPlaybackState::Paused {
                             media_source.Close()?;
-
                             break;
                         }
                     }
                 }
                 self.play()?;
             }
-
             let state_guard = self.state.clone();
             if let Ok(mut state) = state_guard.lock() {
                 *state = 0;
