@@ -25,6 +25,10 @@ pub mod linux {
             vec!["Linux system is temporarily not supported".to_string()]
         }
 
+        fn default_device()-> Option<String>{
+            None
+        }
+
         fn speak(&self, _context: String, _interrupt: bool) -> Result<(), Error> {
             Ok(())
         }

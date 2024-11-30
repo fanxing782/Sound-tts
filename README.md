@@ -5,10 +5,6 @@ Achieve text-to-speech conversion by utilizing system APIs, and realize the play
 ## 支持系统 (Support System)
 - [x] Windows
 
-- [ ] Linux 
-
-
-
 ## 例子 (Example)
 ### 1.初始化 Initialization
 在程序首次启动之前，需调用一次初始化函数，以完成相关设置。示例代码如下：
@@ -28,20 +24,30 @@ for x in devices {
 ```
 
 
-### 3.播放 Playback
+### 3.播放 (Playback)
 
-#### 顺序播放
 ```rust
-SoundTTs::speak("test", "device_name");
-SoundTTs::speak("test1", "device_name");
-```
-#### 中断播放
-```rust
-SoundTTs::speak_interrupt("test2", "device_name");
-```
-#### 停止播放
-```rust
+let value = SoundValue::create("文本","设备名称");
+
+// play_count 播放次数 0 是一直循环播放
+
+// play_interval 本次播放完成后，播放下一次之间的间隔时间
+
+let value1 = SoundValue::new("文本",0,1,"设备名称");
+
+//顺序播放
+
+SoundTTs::speak(value);
+
+SoundTTs::speak(value1);
+
+//中断播放
+
+SoundTTs::speak_interrupt(value1);
+
+//停止播放
+
 SoundTTs::stop("设备名称)");
-```
 
+```
 
