@@ -10,6 +10,7 @@ description = "利用系统 API 达成文本到语音的转换，并借助对不
 crate-type = ["lib", "cdylib", "staticlib"]
 [dependencies]
 lazy_static = "1.5.0"
+libc = "0.2"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.58",features = ["Foundation", "Foundation_Collections", "Media_Core", "Media_Playback", "Media_SpeechSynthesis", "Storage_Streams", "Devices_Enumeration","Media_Audio"] }

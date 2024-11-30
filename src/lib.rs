@@ -8,17 +8,16 @@ use crate::mark::linux::linux::LinuxTTs;
 #[cfg(target_family = "windows")]
 use crate::mark::windows::windows::WindowsTTs;
 mod mark;
+mod ffi;
 
-
+#[cfg(test)]
 mod test {
-    use std::thread::sleep;
-    use std::time::Duration;
-    use crate::{SoundTTs, SoundValue};
+    use crate::SoundTTs;
 
     #[test]
-    pub fn test(){
+    pub fn test() {
         SoundTTs::init();
-        let devices:Vec<String> = SoundTTs::get_devices();
+        let devices: Vec<String> = SoundTTs::get_devices();
         for x in devices {
             println!("{}", x);
         }
@@ -60,7 +59,6 @@ impl SoundTTs {
                 speakers.push(Speaker::new(x))
             }
         }
-
     }
 
     /// 获取本机声卡设备列表
@@ -83,6 +81,14 @@ impl SoundTTs {
         vec![]
     }
 
+
+    /// 输入设备名称，判断是否存在
+    ///
+    pub fn device_is_exist(device_name: &str) -> bool {
+        let devices: Vec<String> = SoundTTs::get_devices();
+        devices.contains(&device_name.to_string())
+    }
+
     /// 按顺序播放文本
     /// ```rust
     /// use sound_tts::{SoundTTs, SoundValue};
@@ -90,7 +96,7 @@ impl SoundTTs {
     /// SoundTTs::speak(SoundValue::create("文本","设备名称"));
     /// ```
     pub fn speak(value: SoundValue) {
-        Self::execute(value,false);
+        Self::execute(value, false);
     }
 
     /// 中断之前顺序播放，从本次开始播放，且丢弃之前队列
@@ -103,7 +109,7 @@ impl SoundTTs {
         Self::execute(value, true);
     }
 
-    pub fn execute(value: SoundValue,interrupt: bool) {
+    pub fn execute(value: SoundValue, interrupt: bool) {
         let guard = SPEAKERS.read().unwrap();
         let speaker_option = guard.iter()
             .find(|speaker| speaker.name == value.device_name).clone();
@@ -138,9 +144,9 @@ trait Target {
     where
         Self: Sized;
 
-    fn default_device()-> Option<String>
+    fn default_device() -> Option<String>
     where
-    Self: Sized;
+        Self: Sized;
 
     fn speak(&self, value: SoundValue, interrupt: bool) -> Result<(), Error>;
 
@@ -149,7 +155,6 @@ trait Target {
 
     fn stop(&self) -> Result<(), Error>;
 }
-
 
 #[derive(Debug)]
 struct Speaker {
@@ -188,15 +193,13 @@ impl Speaker {
     }
 }
 
-
 #[derive(Debug)]
-pub struct SoundValue{
+pub struct SoundValue {
     device_name: String,
-    str:String,
-    play_count:u64,
-    play_interval:u64
+    str: String,
+    play_count: u64,
+    play_interval: u64,
 }
-
 
 
 /// ```
@@ -209,37 +212,36 @@ pub struct SoundValue{
 /// SoundValue::new("文本",0,1,"设备名称");
 /// ```
 impl SoundValue {
-
-    pub fn default(str:&str)->Self{
+    pub fn default(str: &str) -> Self {
         #[cfg(target_family = "windows")]
         let default = WindowsTTs::default_device();
 
         #[cfg(target_family = "unix")]
         let default = LinuxTTs::default_device();
 
-        Self{
+        Self {
             str: String::from(str),
             play_count: 1,
             play_interval: 0,
-            device_name:String::from(default.expect("No default device")),
+            device_name: String::from(default.expect("No default device")),
         }
     }
 
-    pub fn create(str:&str, device_name:&str) ->Self{
-        Self{
+    pub fn create(str: &str, device_name: &str) -> Self {
+        Self {
             str: String::from(str),
             play_count: 1,
             play_interval: 0,
-            device_name:String::from(device_name)
+            device_name: String::from(device_name),
         }
     }
 
-    pub fn new(str:&str,play_count:u64,play_interval:u64,device_name:&str)->Self{
-        Self{
+    pub fn new(str: &str, play_count: u64, play_interval: u64, device_name: &str) -> Self {
+        Self {
             str: String::from(str),
             play_count,
             play_interval,
-            device_name:String::from(device_name)
+            device_name: String::from(device_name),
         }
     }
 }
@@ -250,7 +252,6 @@ impl Into<String> for SoundValue {
         self.str
     }
 }
-
 
 
 #[derive(Debug)]
