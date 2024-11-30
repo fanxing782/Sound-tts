@@ -11,7 +11,9 @@ mod mark;
 
 
 mod test {
-    use crate::{SoundTTs,SoundValue};
+    use std::thread::sleep;
+    use std::time::Duration;
+    use crate::{SoundTTs, SoundValue};
 
     #[test]
     pub fn test(){
@@ -20,12 +22,6 @@ mod test {
         for x in devices {
             println!("{}", x);
         }
-    }
-
-    #[test]
-    pub fn play(){
-        SoundTTs::init();
-        SoundTTs::speak(SoundValue::create("测试","耳机 (Realtek USB Audio)"));
     }
 }
 
@@ -214,7 +210,6 @@ pub struct SoundValue{
 /// ```
 impl SoundValue {
 
-    #[cfg(feature = "default_device")]
     pub fn default(str:&str)->Self{
         #[cfg(target_family = "windows")]
         let default = WindowsTTs::default_device();

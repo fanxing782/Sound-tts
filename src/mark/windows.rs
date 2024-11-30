@@ -91,8 +91,8 @@ pub mod windows {
                 }))?;
                 // 播放方法
                 let play = || -> Result<(), Error> {
-                    if play_count != 1 {
-                        self.play_count.clone().fetch_add(1, Ordering::Relaxed);
+                    if play_count > 0 {
+                        self.play_count.clone().fetch_add(1, Ordering::SeqCst);
                     }
                     if let Ok(mut end) = self.end.clone().try_lock(){
                         *end = false;
