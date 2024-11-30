@@ -214,7 +214,7 @@ pub struct SoundValue{
 /// ```
 impl SoundValue {
 
-    #[cfg(feature = "：default_device")]
+    #[cfg(feature = "default_device")]
     pub fn default(str:&str)->Self{
         #[cfg(target_family = "windows")]
         let default = WindowsTTs::default_device();
