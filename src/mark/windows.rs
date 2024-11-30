@@ -3,16 +3,16 @@ pub mod windows {
     use crate::{Error, QueueStack, SoundValue, Target, DEVICE_DEFAULT};
     use lazy_static::lazy_static;
     use std::collections::HashMap;
-    use std::sync::{Arc, Mutex};
     use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+    use std::sync::{Arc, Mutex};
     use std::thread::sleep;
     use std::time::Duration;
     use windows::core::HSTRING;
     use windows::Devices::Enumeration::{DeviceClass, DeviceInformation};
+    use windows::Foundation::TypedEventHandler;
     use windows::Media::Core::MediaSource;
     use windows::Media::Playback::MediaPlayer;
     use windows::Media::SpeechSynthesis::SpeechSynthesizer;
-    use windows::Foundation::TypedEventHandler;
 
     lazy_static! {
         static ref DEVICE_CACHE_INFO:Arc<HashMap<String, DeviceInformation>> = {
@@ -36,9 +36,9 @@ pub mod windows {
 
     #[derive(Debug)]
     pub(crate) struct WindowsTTs {
-        tag:Arc<AtomicBool>,
-        end:Arc<Mutex<bool>>,
-        device:String,
+        tag: Arc<AtomicBool>,
+        end: Arc<Mutex<bool>>,
+        device: String,
         queue: Arc<Mutex<QueueStack<SoundValue>>>,
         state: Arc<Mutex<u8>>,
         play_count: Arc<AtomicU64>,
@@ -46,30 +46,30 @@ pub mod windows {
     impl WindowsTTs {
         fn play(&self) -> Result<(), Error> {
             let next_text = {
-                if let Ok(queue) = self.queue.clone().try_lock(){
+                if let Ok(queue) = self.queue.clone().try_lock() {
                     queue.pop()
-                }else {
+                } else {
                     None
                 }
             };
 
-            let stop = ||{
+            let stop = || {
                 if let Ok(mut state) = self.state.clone().lock() {
                     *state = 0;
                 }
             };
 
-            let refresh = ||{
+            let refresh = || {
                 self.play_count.clone().store(0, Ordering::Relaxed);
             };
 
-            let player = |next_text:SoundValue|->Result<(), Error> {
+            let player = |next_text: SoundValue| -> Result<(), Error> {
                 self.tag.clone().store(true, Ordering::Relaxed);
                 let play_count = next_text.play_count;
                 let loop_interval = next_text.play_interval;
-                let str:String = next_text.into();
+                let str: String = next_text.into();
                 if str.is_empty() {
-                    return Ok(())
+                    return Ok(());
                 }
 
                 let player = MediaPlayer::new().expect("MediaPlayer::new failed");
@@ -83,8 +83,8 @@ pub mod windows {
                 player.SetSource(&media_source)?;
 
                 let end_clone = self.end.clone();
-                player.MediaEnded(&TypedEventHandler::new( move |_sender: &Option<MediaPlayer>, _args| {
-                    if let Ok(mut end) = end_clone.try_lock(){
+                player.MediaEnded(&TypedEventHandler::new(move |_sender: &Option<MediaPlayer>, _args| {
+                    if let Ok(mut end) = end_clone.try_lock() {
                         *end = true;
                     }
                     Ok(())
@@ -94,7 +94,7 @@ pub mod windows {
                     if play_count > 0 {
                         self.play_count.clone().fetch_add(1, Ordering::SeqCst);
                     }
-                    if let Ok(mut end) = self.end.clone().try_lock(){
+                    if let Ok(mut end) = self.end.clone().try_lock() {
                         *end = false;
                     }
                     Ok(player.Play()?)
@@ -102,9 +102,9 @@ pub mod windows {
                 play()?;
                 while self.tag.clone().load(Ordering::Relaxed) {
                     sleep(Duration::from_millis(10));
-                    let end_x = if let Ok(end) = self.end.clone().try_lock(){
+                    let end_x = if let Ok(end) = self.end.clone().try_lock() {
                         *end
-                    }else {
+                    } else {
                         false
                     };
                     if end_x {
@@ -145,9 +145,9 @@ pub mod windows {
     impl Target for WindowsTTs {
         fn new(device: &str) -> Result<WindowsTTs, Error> {
             Ok(Self {
-                tag:Arc::new(AtomicBool::new(false)),
-                end:Arc::new(Mutex::new(false)),
-                device:device.to_string(),
+                tag: Arc::new(AtomicBool::new(false)),
+                end: Arc::new(Mutex::new(false)),
+                device: device.to_string(),
                 queue: Arc::new(Mutex::new(QueueStack::<SoundValue>::new())),
                 state: Arc::new(Mutex::new(0)),
                 play_count: Arc::new(AtomicU64::new(0)),
@@ -158,12 +158,12 @@ pub mod windows {
             DEVICE_CACHE_INFO.clone().keys().map(|k| k.to_string()).collect::<Vec<String>>()
         }
 
-        fn default_device()-> Option<String>{
-           if let Ok(default) = DEVICE_DEFAULT.clone().read() {
-               Some(default.to_string())
-            }else {
-               None
-           }
+        fn default_device() -> Option<String> {
+            if let Ok(default) = DEVICE_DEFAULT.clone().read() {
+                Some(default.to_string())
+            } else {
+                None
+            }
         }
 
         fn speak(&self, context: SoundValue, interrupt: bool) -> Result<(), Error> {
@@ -197,12 +197,11 @@ pub mod windows {
         fn stop(&self) -> Result<(), Error> {
             let is_playing = self.is_playing()?;
             if is_playing {
-                if let Ok(mut queue) = self.queue.clone().try_lock(){
+                if let Ok(mut queue) = self.queue.clone().try_lock() {
                     queue.clear();
                 }
 
                 self.tag.clone().store(false, Ordering::Relaxed);
-
             }
             Ok(())
         }
