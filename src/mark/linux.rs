@@ -1,6 +1,6 @@
 #[cfg(target_family = "unix")]
 pub mod linux {
-    use crate::{Error, Target};
+    use crate::{Error, SoundValue, Target};
     use lazy_static::lazy_static;
     use std::collections::HashMap;
     use std::sync::{Arc, RwLock};
@@ -29,7 +29,7 @@ pub mod linux {
             None
         }
 
-        fn speak(&self, _context: String, _interrupt: bool) -> Result<(), Error> {
+        fn speak(&self, context: SoundValue, interrupt: bool) -> Result<(), Error> {
             Ok(())
         }
 
