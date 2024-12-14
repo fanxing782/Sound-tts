@@ -54,7 +54,7 @@ impl SoundTTs {
         let devices = LinuxTTs::devices();
 
 
-        if let Ok(mut speakers) = SPEAKERS.clone().write() {
+        if let Ok(mut speakers) = SPEAKERS.clone().try_write() {
             for x in devices {
                 speakers.push(Speaker::new(x))
             }
@@ -71,7 +71,7 @@ impl SoundTTs {
     ///  }
     /// ```
     pub fn get_devices() -> Vec<String> {
-        if let Ok(speakers) = SPEAKERS.clone().read() {
+        if let Ok(speakers) = SPEAKERS.clone().try_read() {
             let names: Vec<String> = speakers.iter()
                 .map(|speaker| speaker.name.clone())
                 .collect();
@@ -110,11 +110,13 @@ impl SoundTTs {
     }
 
     pub fn execute(value: SoundValue, interrupt: bool) {
-        let guard = SPEAKERS.read().unwrap();
-        let speaker_option = guard.iter()
-            .find(|speaker| speaker.name == value.device_name).clone();
-        if let Some(speaker) = speaker_option {
-            speaker.speak(value, interrupt);
+
+        if let Ok(guard) = SPEAKERS.clone().try_read() {
+            let speaker_option = guard.iter()
+                .find(|speaker| speaker.name == value.device_name).clone();
+            if let Some(speaker) = speaker_option {
+                speaker.speak(value, interrupt);
+            }
         }
     }
 
@@ -126,11 +128,13 @@ impl SoundTTs {
     /// SoundTTs::stop("设备名称)");
     /// ```
     pub fn stop(device: &str) {
-        let guard = SPEAKERS.read().unwrap();
-        let speaker_option = guard.iter()
-            .find(|speaker| speaker.name == device).clone();
-        if let Some(speaker) = speaker_option {
-            speaker.stop().expect("speaker stop failed");
+        if let Ok(guard) = SPEAKERS.clone().try_read() {
+            let speaker_option = guard.iter()
+                .find(|speaker| speaker.name == device).clone();
+            if let Some(speaker) = speaker_option {
+                let _ =  speaker.stop();
+
+            }
         }
     }
 }
@@ -180,15 +184,17 @@ impl Speaker {
         let tts = self.tts.clone();
         // sleep(Duration::from_millis(10));
         thread::spawn(move || {
-            let guard = tts.read().expect("The lock for the mark was not obtained when starting to play");
-            guard.speak(value, interrupt).expect("Speaking failed");
+            if let Ok(guard) = tts.try_read() {
+               let _ =  guard.speak(value, interrupt);
+            }
         });
     }
 
     fn stop(&self) -> Result<(), Error> {
         let tts = self.tts.clone();
-        let guard = tts.read().expect("Unable to obtain lock for mark when stopping playback");
-        guard.stop()?;
+        if let Ok(guard) = tts.try_read() {
+            guard.stop()?;
+        }
         Ok(())
     }
 }
@@ -223,7 +229,11 @@ impl SoundValue {
             str: String::from(str),
             play_count: 1,
             play_interval: 0,
-            device_name: String::from(default.expect("No default device")),
+            device_name:  if let Some(default) = default {
+                default
+            }else {
+                String::new()
+            },
         }
     }
 
@@ -264,23 +274,28 @@ impl<T> QueueStack<T> {
         Self { data: Arc::new(Mutex::new(Vec::new())) }
     }
     fn push(&mut self, item: T) {
-        let stack = self.data.clone();
-        stack.lock().unwrap().push(item);
+        if let  Ok(mut stack) = self.data.clone().try_lock(){
+            stack.push(item);
+        }
     }
     fn pop(&self) -> Option<T> {
-        let stack = self.data.clone();
-        let mut stack = stack.lock().unwrap();
-        if stack.is_empty() {
+        if let  Ok(mut stack) = self.data.clone().try_lock(){
+            if stack.is_empty() {
+                None
+            } else {
+                Some(stack.remove(0))
+            }
+        }else {
             None
-        } else {
-            Some(stack.remove(0))
         }
     }
+
     fn clear(&mut self) {
-        let stack = self.data.clone();
-        let mut stack = stack.lock().unwrap();
-        if !stack.is_empty() {
-            stack.clear();
+        if let Ok(mut stack) =  self.data.clone().try_lock(){
+            if !stack.is_empty() {
+                stack.clear();
+            }
         }
+
     }
 }

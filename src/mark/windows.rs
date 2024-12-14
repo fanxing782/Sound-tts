@@ -17,19 +17,24 @@ pub mod windows {
     lazy_static! {
         static ref DEVICE_CACHE_INFO:Arc<HashMap<String, DeviceInformation>> = {
             let mut device_map = HashMap::new();
-             let async_operation = DeviceInformation::FindAllAsyncDeviceClass(DeviceClass::AudioRender).expect("DeviceInformation::FindAllAsyncDeviceClass failed -- FIND").get().expect("DeviceInformation::FindAllAsyncDeviceClass failed");
-                for x in async_operation {
-                    let name = x.Name().expect("Abnormal device name retrieval").to_string();
-                    if let Ok(default) = x.IsDefault(){
-                        if default {
-                            if let Ok(mut default) = DEVICE_DEFAULT.clone().write() {
-                                default.clear();
-                                default.push_str(&name);
+            if let Ok(op) =  DeviceInformation::FindAllAsyncDeviceClass(DeviceClass::AudioRender){
+               if let Ok(async_operation) = op.get(){
+                  for x in async_operation {
+                     if let Ok(name) = x.Name(){
+                         let name = name.to_string();
+                            if let Ok(default) = x.IsDefault(){
+                                if default {
+                                    if let Ok(mut default) = DEVICE_DEFAULT.clone().try_write() {
+                                        default.clear();
+                                        default.push_str(&name);
+                                    }
+                                }
                             }
-                        }
-                    }
-                    device_map.insert(name, x);
-                }
+                         device_map.insert(name, x);
+                     }
+                  }
+               }
+            }
             Arc::new(device_map)
         };
     }
@@ -71,11 +76,14 @@ pub mod windows {
                 if str.is_empty() {
                     return Ok(());
                 }
-
-                let player = MediaPlayer::new().expect("MediaPlayer::new failed");
+                let player = MediaPlayer::new()?;
                 let binding = DEVICE_CACHE_INFO.clone();
                 let device = binding.get(&self.device);
-                let _ = player.SetAudioDevice(device.unwrap());
+
+                if let Some(device) = device{
+                    let _ = player.SetAudioDevice(device);
+                }
+
                 let str = HSTRING::from(&str);
                 let synthesizer = SpeechSynthesizer::new()?;
                 let stream = synthesizer.SynthesizeTextToStreamAsync(&str)?.get()?;
@@ -159,7 +167,7 @@ pub mod windows {
         }
 
         fn default_device() -> Option<String> {
-            if let Ok(default) = DEVICE_DEFAULT.clone().read() {
+            if let Ok(default) = DEVICE_DEFAULT.clone().try_read() {
                 Some(default.to_string())
             } else {
                 None
@@ -170,24 +178,21 @@ pub mod windows {
             if interrupt {
                 self.stop()?;
             }
-            let queue_guard = self.queue.clone();
-            let mut guard = queue_guard.lock().unwrap();
-            guard.push(context);
-            let state_guard = self.state.clone();
-            if let Ok(mut state) = state_guard.lock() {
-                if *state == 1u8 {
-                    return Ok(());
-                } else {
-                    *state = 1;
+            if let Ok(mut guard) =  self.queue.clone().try_lock() {
+                guard.push(context);
+                if let Ok(mut state) = self.state.clone().try_lock() {
+                    if *state == 1u8 {
+                        return Ok(());
+                    } else {
+                        *state = 1;
+                    }
                 }
             }
-            drop(guard);
             self.play()?;
             Ok(())
         }
         fn is_playing(&self) -> Result<bool, Error> {
-            let state_guard = self.state.clone();
-            if let Ok(state) = state_guard.lock() {
+            if let Ok(state) = self.state.clone().try_lock() {
                 return Ok(*state > 0);
             }
             Ok(false)
