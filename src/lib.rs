@@ -11,21 +11,6 @@ use crate::mark::windows::windows::WindowsTTs;
 mod mark;
 mod ffi;
 
-#[cfg(test)]
-mod test {
-    use crate::SoundTTs;
-
-    #[test]
-    pub fn test() {
-        SoundTTs::init();
-        let devices: Vec<String> = SoundTTs::get_devices();
-        for x in devices {
-            println!("{}", x);
-        }
-    }
-}
-
-
 #[derive(Debug)]
 pub enum Error {
     #[cfg(target_family = "windows")]
