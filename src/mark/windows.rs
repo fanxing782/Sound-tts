@@ -1,8 +1,8 @@
 #[cfg(target_family = "windows")]
 pub mod windows {
-    use crate::{Error, QueueStack, SoundValue, Target, DEVICE_DEFAULT};
+    use crate::{Error, SoundValue, Target, DEVICE_DEFAULT};
     use lazy_static::lazy_static;
-    use std::collections::HashMap;
+    use std::collections::{HashMap, VecDeque};
     use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
     use std::sync::{Arc, Mutex};
     use std::thread::sleep;
@@ -44,15 +44,16 @@ pub mod windows {
         tag: Arc<AtomicBool>,
         end: Arc<Mutex<bool>>,
         device: String,
-        queue: Arc<Mutex<QueueStack<SoundValue>>>,
+        queue: Arc<Mutex<VecDeque<SoundValue>>>,
         state: Arc<Mutex<u8>>,
         play_count: Arc<AtomicU64>,
     }
     impl WindowsTTs {
         fn play(&self) -> Result<(), Error> {
+           //sleep(Duration::from_millis(10));
             let next_text = {
-                if let Ok(queue) = self.queue.clone().try_lock() {
-                    queue.pop()
+                if let Ok(mut queue) = self.queue.clone().try_lock() {
+                    queue.pop_front()
                 } else {
                     None
                 }
@@ -156,7 +157,7 @@ pub mod windows {
                 tag: Arc::new(AtomicBool::new(false)),
                 end: Arc::new(Mutex::new(false)),
                 device: device.to_string(),
-                queue: Arc::new(Mutex::new(QueueStack::<SoundValue>::new())),
+                queue: Arc::new(Mutex::new(VecDeque::<SoundValue>::new())),
                 state: Arc::new(Mutex::new(0)),
                 play_count: Arc::new(AtomicU64::new(0)),
             })
@@ -179,7 +180,7 @@ pub mod windows {
                 self.stop()?;
             }
             if let Ok(mut guard) =  self.queue.clone().try_lock() {
-                guard.push(context);
+                guard.push_back(context);
                 if let Ok(mut state) = self.state.clone().try_lock() {
                     if *state == 1u8 {
                         return Ok(());

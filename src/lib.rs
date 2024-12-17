@@ -1,7 +1,8 @@
 use lazy_static::lazy_static;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, RwLock};
 use std::thread;
-
+use std::thread::sleep;
+use std::time::Duration;
 #[cfg(target_family = "unix")]
 use crate::mark::linux::linux::LinuxTTs;
 
@@ -182,7 +183,7 @@ impl Speaker {
 
     fn speak(&self, value: SoundValue, interrupt: bool) {
         let tts = self.tts.clone();
-        // sleep(Duration::from_millis(10));
+        sleep(Duration::from_millis(10));
         thread::spawn(move || {
             if let Ok(guard) = tts.try_read() {
                let _ =  guard.speak(value, interrupt);
@@ -260,42 +261,5 @@ impl SoundValue {
 impl Into<String> for SoundValue {
     fn into(self) -> String {
         self.str
-    }
-}
-
-
-#[derive(Debug)]
-pub(crate) struct QueueStack<T> {
-    data: Arc<Mutex<Vec<T>>>,
-}
-
-impl<T> QueueStack<T> {
-    fn new() -> QueueStack<T> {
-        Self { data: Arc::new(Mutex::new(Vec::new())) }
-    }
-    fn push(&mut self, item: T) {
-        if let  Ok(mut stack) = self.data.clone().try_lock(){
-            stack.push(item);
-        }
-    }
-    fn pop(&self) -> Option<T> {
-        if let  Ok(mut stack) = self.data.clone().try_lock(){
-            if stack.is_empty() {
-                None
-            } else {
-                Some(stack.remove(0))
-            }
-        }else {
-            None
-        }
-    }
-
-    fn clear(&mut self) {
-        if let Ok(mut stack) =  self.data.clone().try_lock(){
-            if !stack.is_empty() {
-                stack.clear();
-            }
-        }
-
     }
 }
